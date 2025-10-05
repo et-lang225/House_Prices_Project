@@ -1,0 +1,15 @@
+# Data files
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.zip
+
+# Data folder
+data/
+Data/
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
