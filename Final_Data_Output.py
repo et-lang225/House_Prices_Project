@@ -56,9 +56,9 @@ class Final_Data:
         zip_pop = self.Population_import()
         homicides = self.Homicides_import()
         county_map= pd.read_csv(self.county_map)
-        homicides_zip = homicides.merge(county_map, how='left', left_on='NAME',right_on='COUNTYNAME')
-        homicides_zip = homicides_zip.rename(columns={'STCOUNTYFP': 'zip_code'})
+        county_map = county_map.rename(columns={'ZIP': 'zip_code'})
         House_Income = houses.merge(income, how='left', left_on='zip_code', right_on='zipcode')
         House_Income_Pop = House_Income.merge(zip_pop, how='left', on='zip_code')
-        House_Income_Pop_Hom = House_Income_Pop.merge(homicides_zip, how='left', on='zip_code')
+        House_Income_Pop = House_Income_Pop.merge(county_map, how='left', on='zip_code')
+        House_Income_Pop_Hom = House_Income_Pop.merge(homicides, how='left', left_on='COUNTYNAME', right_on='NAME')
         return House_Income_Pop_Hom
