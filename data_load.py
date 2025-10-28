@@ -3,6 +3,7 @@ import kagglehub
 import os
 import pandas as pd
 from census import Census
+import requests
 
 class Data:
     def __init__(self):
@@ -38,11 +39,14 @@ class Data:
         return df.to_csv("Zip_Pop.csv", index=False)
     
     def ZIP_COUNTY(self):
-        path = kagglehub.dataset_download(self.county_map)
-        for file in os.listdir(path):
-            if file.endswith(".csv"):
-                csv_path = os.path.join(path, file)
-                print("Loading:", csv_path)
-                df = pd.read_csv(csv_path)
-                break
-        return df.to_csv('mapping_County.csv')
+        hud_token= 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI2IiwianRpIjoiYzc4MjZmYzk2ZGYzMDAyY2JiMTRmNDEzYzBlNDE1ODZhOWI1OTljMDkxMmYwOTAzNjZjNjJiMTE0Zjc2ZjZlMmZmZjY1YzUxYTAxOTFkMzEiLCJpYXQiOjE3NjE2NTE5MjEuODc2NzEyLCJuYmYiOjE3NjE2NTE5MjEuODc2NzE0LCJleHAiOjIwNzcxODQ3MjEuODcyODcsInN1YiI6IjExMjAwMSIsInNjb3BlcyI6W119.IBVF-f6LTD-gUfGUi3L165CFgrX8DkaMoyNCVMtxdxJKurTsqpyucxo-4bnQS3_-wpcQmQjsFq4eqXqIUpTQNw'
+        url = "https://www.huduser.gov/hudapi/public/usps"
+        params = {"type": 2,"query": "All"}
+        headers = {"Authorization": f"Bearer {hud_token}","Accept": "application/json"}
+        resp = requests.get(url, params=params, headers=headers)
+        print(resp.status_code, resp.url)  # check if 200
+        resp.raise_for_status()
+        data = resp.json()
+        records = data['data']['results']
+        county_map = pd.DataFrame.from_records(records)
+        return county_map.to_csv('mapping_County.csv')

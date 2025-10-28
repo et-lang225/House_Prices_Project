@@ -54,16 +54,22 @@ class Final_Data:
         homicides.loc[ :,'Count'] = homicides.loc[:,'Count'].apply(lambda x: pd.to_numeric(x))
         homicides = homicides[['GEOID', 'NAME', 'ST_NAME', 'Period', 'Count', 'Rate']]
         return homicides
+
+    def County_import(self):
+        county_map= pd.read_csv(self.county_map)
+        county_map = county_map.loc[county_map['tot_ratio'] >= 0.5,]
+        county_map = county_map.loc[county_map['res_ratio'] >= 0.5,]
+        county_map.rename(columns={'zip': 'zip_code', 'geoid': 'GEOID'}, inplace=True)
+        return county_map
     
     def Merge_all(self, sold=True, for_sale=True, min_price=None, max_price=None, min_bed=None, max_bed=None, min_bath=None, max_bath = None, min_sqft = None, max_sqft = None):
         houses = self.House_filter(sold, for_sale, min_price, max_price, min_bed, max_bed, min_bath, max_bath, min_sqft, max_sqft)
         income = self.Income_clean_merge()
         zip_pop = self.Population_import()
         homicides = self.Homicides_import()
-        county_map= pd.read_csv(self.county_map)
-        county_map = county_map.rename(columns={'ZIP': 'zip_code'})
+        county_map= self.County_import()
         House_Income = houses.merge(income, how='left', left_on='zip_code', right_on='zipcode')
         House_Income_Pop = House_Income.merge(zip_pop, how='left', on='zip_code')
         House_Income_Pop = House_Income_Pop.merge(county_map, how='left', on='zip_code')
-        House_Income_Pop_Hom = House_Income_Pop.merge(homicides, how='left', left_on='COUNTYNAME', right_on='NAME')
+        House_Income_Pop_Hom = House_Income_Pop.merge(homicides, how='left', on='GEOID')
         return House_Income_Pop_Hom
