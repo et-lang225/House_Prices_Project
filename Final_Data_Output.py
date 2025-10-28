@@ -8,9 +8,13 @@ class Final_Data:
         self.homicides_path = 'HHS_homicides.csv'
         self.county_map = 'mapping_County.csv'
     
-    def House_filter(self, min_price=None, max_price=None, min_bed=None, max_bed=None, min_bath=None, max_bath = None, min_sqft = None, max_sqft = None):
+    def House_filter(self, sold=True, for_sale=True, min_price=None, max_price=None, min_bed=None, max_bed=None, min_bath=None, max_bath = None, min_sqft = None, max_sqft = None):
         houses = pd.read_csv(self.house_path)
         houses.dropna(axis=0, inplace=True)
+        if sold != True:
+            houses = houses.loc[houses['status']!='sold',]
+        if for_sale != True:
+            houses = houses.loc[houses['status']!='for_sale',]
         if min_price is not None:
             houses = houses.loc[houses['price'] >= min_price,]
         if max_price is not None:
@@ -33,6 +37,7 @@ class Final_Data:
         Income = pd.read_csv(self.income_path)
         Income = Income.loc[Income['zipcode'] > 0, :]
         Income = Income[['zipcode', 'N1', 'A00100']]
+        Income = Income.groupby('zipcode').sum()
         Income['Household_AGI'] = Income['A00100'] / Income['N1']
         return Income
     
@@ -43,15 +48,15 @@ class Final_Data:
     
     def Homicides_import(self):
         homicides = pd.read_csv(self.homicides_path)
-        homicides = homicides.loc[homicides['Intent']== 'All_Homicide', ]
+        homicides = homicides.loc[(homicides['Intent']== 'All_Homicide') & (homicides['Period']=='2023'), ]
         homicides.loc[homicides['Count']=='1-9','Count']= '5'
         homicides.loc[homicides['Count']=='10-50','Count']= '30'
         homicides.loc[ :,'Count'] = homicides.loc[:,'Count'].apply(lambda x: pd.to_numeric(x))
         homicides = homicides[['GEOID', 'NAME', 'ST_NAME', 'Period', 'Count', 'Rate']]
         return homicides
     
-    def Merge_all(self, min_price=None, max_price=None, min_bed=None, max_bed=None, min_bath=None, max_bath = None, min_sqft = None, max_sqft = None):
-        houses = self.House_filter(min_price, max_price, min_bed, max_bed, min_bath, max_bath, min_sqft, max_sqft)
+    def Merge_all(self, sold=True, for_sale=True, min_price=None, max_price=None, min_bed=None, max_bed=None, min_bath=None, max_bath = None, min_sqft = None, max_sqft = None):
+        houses = self.House_filter(sold, for_sale, min_price, max_price, min_bed, max_bed, min_bath, max_bath, min_sqft, max_sqft)
         income = self.Income_clean_merge()
         zip_pop = self.Population_import()
         homicides = self.Homicides_import()
