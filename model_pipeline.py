@@ -7,7 +7,7 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 class DataPipeline:
-    def __init__(self, data_path='HousingData/realtor-data.zip.csv.zip'):
+    def __init__(self, data_path='Data/final_dataset.csv'):
         self.data_path = data_path
         self.df = None
         self.X_train = None
@@ -17,7 +17,7 @@ class DataPipeline:
         self.stats = None
         
     def load_data(self, use_sample=False):
-        self.df = pd.read_csv(self.data_path, compression='zip')
+        self.df = pd.read_csv(self.data_path)
         print("Data Shape:", self.df.shape)
         print("Column Names:", list(self.df.columns))
         print("\nData Types\n:", self.df.dtypes)
