@@ -40,6 +40,8 @@ class Final_Data:
         Income = Income[['zipcode', 'N1', 'A00100']]
         Income = Income.groupby('zipcode').sum()
         Income['Household_AGI'] = Income['A00100'] / Income['N1']
+        Income.rename(columns={'N1': 'Households', 'A00100': 'Total_AGI'}, inplace=True)
+        Income = Income[['Households', 'Total_AGI', 'Household_AGI']]
         return Income
     
     def Population_import(self):
@@ -54,6 +56,7 @@ class Final_Data:
         homicides.loc[homicides['Count']=='10-50','Count']= '30'
         homicides.loc[ :,'Count'] = homicides.loc[:,'Count'].apply(lambda x: pd.to_numeric(x))
         homicides = homicides[['GEOID', 'NAME', 'ST_NAME', 'Period', 'Count', 'Rate']]
+        homicides.rename(columns={'NAME': 'County_Name', 'ST_NAME': 'State', 'Count': 'Homicides'}, inplace=True)
         return homicides
 
     def County_import(self):
@@ -89,10 +92,10 @@ class Final_Data:
         
         # 5. SAFETY & LOCATION QUALITY
         # Handle missing homicide data
-        df['Count'] = df['Count'].fillna(0)
-        df['safety_score'] = np.where(df['Count'] <= 5, 'Very Safe',
-                            np.where(df['Count'] <= 15, 'Safe',
-                            np.where(df['Count'] <= 30, 'Moderate', 'Caution')))
+        df['Homicides'] = df['Homicides'].fillna(0)
+        df['safety_score'] = np.where(df['Homicides'] <= 5, 'Very Safe',
+                            np.where(df['Homicides'] <= 15, 'Safe',
+                            np.where(df['Homicides'] <= 30, 'Moderate', 'Caution')))
         
         # Population density (lifestyle indicator)
         df['population_density'] = df['Total_Pop'] / (df['acre_lot'] + 0.1)
@@ -106,13 +109,13 @@ class Final_Data:
         
         # 7. REGIONAL MARKET SEGMENTS
         df['zip_region'] = df['zip_code'].astype(str).str[0]  # First digit of zip code
-        df['state_market'] = df['ST_NAME']
+        df['state_market'] = df['State']
         
         # 8. COMPOSITE SCORES FOR RECOMMENDATIONS
         # Normalize key metrics for scoring (0-100 scale)
         df['affordability_numeric'] = 100 - np.clip((df['price_to_income_ratio'] - 2) * 25, 0, 100)
         df['value_numeric'] = 100 - pd.qcut(df['price_per_sqft'], q=100, labels=False)
-        df['safety_numeric'] = 100 - np.clip(df['Count'] * 3, 0, 100)
+        df['safety_numeric'] = 100 - np.clip(df['Homicides'] * 3, 0, 100)
         
         # Overall recommendation score
         df['recommendation_score'] = (df['affordability_numeric'] * 0.4 + 
