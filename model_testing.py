@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
 import statsmodels.api as sm
 from sklearn.neighbors import KNeighborsRegressor
@@ -71,3 +71,15 @@ class Testing_Models:
         # Michael this will get faster if you have a fast GPU, I will have to adjust the code though to use that GPU
         print(f"\nOptimization finished. Best parameters found:\n{best_params}")
         print(f"Minimum RMSE: {trials.best_trial['result']['loss']:.4f}")
+    
+    def Random_Forest_CV(self):
+        param_grid = {
+        'n_estimators': [100, 200, 300, 400],
+        'max_depth': [None, 10, 20, 30],
+        'min_samples_split': [2, 5, 10]
+        }
+        RF = RandomForestRegressor(random_state=42)
+        RF_grid_search = RandomizedSearchCV(RF, param_distributions=param_grid, n_iter=15, scoring='neg_root_mean_squared_error', n_jobs=-1, cv=3)
+        RF_grid_search.fit(self.X_train, self.y_train)
+        best_rf_model = RF_grid_search.best_estimator_
+        return best_rf_model
