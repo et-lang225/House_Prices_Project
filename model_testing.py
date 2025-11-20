@@ -73,6 +73,7 @@ class Testing_Models:
         print(f"Minimum RMSE: {trials.best_trial['result']['loss']:.4f}")
     
     def Random_Forest_CV(self):
+        # as of right now this takes 227 minutes
         param_grid = {
         'n_estimators': [50, 70, 90, 100],
         'max_depth': [5, 10, 15],
