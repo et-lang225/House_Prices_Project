@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSe
 from sklearn.preprocessing import StandardScaler
 import statsmodels.api as sm
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
 import xgboost as xgb
 from hpsklearn import HyperoptEstimator, xgboost_regression
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
@@ -74,12 +74,12 @@ class Testing_Models:
     
     def Random_Forest_CV(self):
         param_grid = {
-        'n_estimators': [100, 200, 300, 400],
-        'max_depth': [None, 10, 20, 30],
+        'n_estimators': [50, 70, 90, 100],
+        'max_depth': [5, 10, 15],
         'min_samples_split': [2, 5, 10]
         }
-        RF = RandomForestRegressor(random_state=42)
-        RF_grid_search = RandomizedSearchCV(RF, param_distributions=param_grid, n_iter=15, scoring='neg_root_mean_squared_error', n_jobs=-1, cv=3)
+        RF = RandomForestRegressor(random_state=42, n_jobs=1)
+        RF_grid_search = RandomizedSearchCV(RF, param_distributions=param_grid, n_iter=20, scoring='neg_root_mean_squared_error', n_jobs=1, cv=3)
         RF_grid_search.fit(self.X_train, self.y_train)
         best_rf_model = RF_grid_search.best_estimator_
         return best_rf_model
