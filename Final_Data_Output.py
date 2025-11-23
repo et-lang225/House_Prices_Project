@@ -121,6 +121,6 @@ class Final_Data:
             df.loc[df[col] <= upper[i],]
             i += 1
         
-        clean_df = df
+        clean_df = df.reset_index(drop=True)
         
         return clean_df

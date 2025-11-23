@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import root_mean_squared_error
 import statsmodels.api as sm
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
@@ -12,13 +13,22 @@ from hyperopt.pyll.base import scope
 
 class Testing_Models:
     def __init__(self, X, y):
-        self.zip = X['zip_code']
-        self.Xscaled = pd.concat([pd.DataFrame(StandardScaler().fit_transform(X.drop(columns=['zip_code'])), columns=X.drop(columns=['zip_code']).columns, index=X.index), X[['zip_code']]], axis=1)
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.Xscaled, y, test_size=0.3, random_state=42)
+        self.X_train_1 = X.groupby('zip_code').sample(n=1, random_state=42)
+        leftover = X.drop(self.X_train_1.index)
+        self.X_train_2, self.X_test = train_test_split(leftover, test_size=0.3, random_state=42)
+        self.X_train = pd.concat([self.X_train_1, self.X_train_2], axis=0)
+        self.scale_fit = StandardScaler().fit(self.X_train.drop(columns=['zip_code']))
+        num_cols = self.X_train.drop(columns=['zip_code']).columns
+        X_train_scaled = pd.DataFrame(self.scale_fit.transform(self.X_train[num_cols]), index=self.X_train.index, columns=num_cols)
+        self.X_train = pd.concat([X_train_scaled, self.X_train[['zip_code']]], axis=1)
+        X_test_scaled = pd.DataFrame(self.scale_fit.transform(self.X_test[num_cols]), index=self.X_test.index, columns=num_cols)
+        self.X_test = pd.concat([X_test_scaled, self.X_test[['zip_code']]], axis=1)
+        self.y_train = y.loc[self.X_train.index,]
+        self.y_test = y.loc[self.X_test.index,]
         self.dtrain = xgb.DMatrix(self.X_train, label=self.y_train)
         self.dtest = xgb.DMatrix(self.X_test, label=self.y_test)
         
-    def GLMM_CV(self):
+    def GLMM(self):
         X_train_fe = sm.add_constant(self.X_train.drop(columns=['zip_code']))
         exog_re = np.ones((len(X_train_fe),1))
         groups = self.X_train['zip_code'].astype(str)
@@ -26,61 +36,40 @@ class Testing_Models:
         result = mod.fit()
         re = pd.DataFrame.from_dict(result.random_effects, orient='index').reset_index()
         re.columns = ['zip_code', 'random_effect']
+        re['zip_code'] = re['zip_code'].astype(float)
         re_df = self.X_test[['zip_code']].merge(re, on='zip_code', how='left')
         exog = self.X_test.drop(columns=['zip_code'])
-        y_pred_mixed = result.predict(exog=exog)+ re_df['random_effect'].values
+        exog = sm.add_constant(exog)
+        y_pred_mixed = result.predict(exog=exog) + re_df['random_effect'].values
         R_squared = 1 - np.sum((self.y_test - y_pred_mixed) ** 2) / np.sum((self.y_test - np.mean(self.y_test)) ** 2)
-        return print(f'Proportion of Variance Explained: {R_squared:.4f}')
+        rmse = root_mean_squared_error(self.y_test, y_pred_mixed)
+        return {'error': rmse, 'variance_explained': R_squared, 'y_pred': np.exp(y_pred_mixed), 'model': result, 'scale_fit': self.scale_fit, 'data': self.X_train}
     
-    def XGBoost_CV(self):
-        space = {
+    def XGBoost(self, gamma, learning_rate, colsample_bytree, subsample, max_depth, min_child_weight):
+        parms = {
             'objective': 'reg:squarederror',
-            'gamma': hp.uniform('gamma', 0, 1.0),
-            'learning_rate': hp.loguniform('learning_rate', np.log(0.03), np.log(0.3)),
-            'colsample_bytree': hp.uniform('colsample_bytree', 0.5, 1.0),
-            'subsample': hp.uniform('subsample', 0.5, 1.0),
-            'max_depth': scope.int(hp.quniform('max_depth', 3, 10, 1)),
-            'min_child_weight': scope.int(hp.quniform('min_child_weight', 1, 5, 1)),
+            'gamma': gamma,
+            'learning_rate': learning_rate,
+            'colsample_bytree': colsample_bytree,
+            'subsample': subsample,
+            'max_depth': max_depth,
+            'min_child_weight': min_child_weight,
             'tree_method': 'hist'
         }
-        def objective(params):
-            params['max_depth'] = int(params['max_depth'])
-            params['min_child_weight'] = int(params['min_child_weight'])
-            cv_results = xgb.cv(
-                params,
-                self.dtrain,
-                num_boost_round=1000,
-                metrics = 'rmse',
-                nfold=3,
-                early_stopping_rounds=20,
-                seed=42,
-                verbose_eval=False
-            )
-            best_loss = cv_results['test-rmse-mean'].min()
-            return {'loss': best_loss, 'status': STATUS_OK}
-        
-        trials = Trials()
-        best_params = fmin(
-            fn=objective,
-            space=space,
-            algo=tpe.suggest,
-            max_evals=50,
-            trials=trials
+        xgb_mod = xgb.train(
+            params = parms,
+            dtrain = self.dtrain,
+            num_boost_round=1000
         )
-        # This function should take about an hour
-        # Michael this will get faster if you have a fast GPU, I will have to adjust the code though to use that GPU
-        print(f"\nOptimization finished. Best parameters found:\n{best_params}")
-        print(f"Minimum RMSE: {trials.best_trial['result']['loss']:.4f}")
+        y_pred = xgb_mod.predict(self.dtest)
+        rmse = root_mean_squared_error(self.y_test, y_pred)
+        R_squared = 1 - np.sum((self.y_test - y_pred) ** 2) / np.sum((self.y_test - np.mean(self.y_test)) ** 2)
+        return {'error': rmse, 'variance_explained': R_squared, 'y_pred': np.exp(y_pred), 'model': xgb_mod, 'scale_fit': self.scale_fit}
     
-    def Random_Forest_CV(self):
-        # as of right now this takes 227 minutes
-        param_grid = {
-        'n_estimators': [50, 70, 90, 100],
-        'max_depth': [5, 10, 15],
-        'min_samples_split': [2, 5, 10]
-        }
-        RF = RandomForestRegressor(random_state=42, n_jobs=1)
-        RF_grid_search = RandomizedSearchCV(RF, param_distributions=param_grid, n_iter=20, scoring='neg_root_mean_squared_error', n_jobs=1, cv=3)
-        RF_grid_search.fit(self.X_train, self.y_train)
-        best_rf_model = RF_grid_search.best_estimator_
-        return best_rf_model
+    def Random_Forest(self, max_depth, min_samples_split):
+        RF = RandomForestRegressor(n_estimators=400 , max_depth=max_depth, min_samples_split=min_samples_split, random_state=42, n_jobs=8, max_samples=0.05)
+        RF.fit(self.X_train, self.y_train)
+        y_pred = RF.predict(self.X_test)
+        rmse = root_mean_squared_error(self.y_test, y_pred)
+        R_squared = 1 - np.sum((self.y_test - y_pred) ** 2) / np.sum((self.y_test - np.mean(self.y_test)) ** 2)
+        return {'error': rmse, 'variance_explained': R_squared, 'y_pred': np.exp(y_pred), 'model': RF, 'scale_fit': self.scale_fit}        
