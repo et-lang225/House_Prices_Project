@@ -43,25 +43,24 @@ class Testing_Models:
         y_pred_mixed = result.predict(exog=exog) + re_df['random_effect'].values
         R_squared = 1 - np.sum((self.y_test - y_pred_mixed) ** 2) / np.sum((self.y_test - np.mean(self.y_test)) ** 2)
         rmse = root_mean_squared_error(self.y_test, y_pred_mixed)
-        return {'error': rmse, 'variance_explained': R_squared, 'y_pred': np.exp(y_pred_mixed), 'model': result, 'scale_fit': self.scale_fit, 'data': self.X_train}
+        return {'error': rmse, 'variance_explained': R_squared, 'y_pred': np.exp(y_pred_mixed), 'model': result, 'scale_fit': self.scale_fit}
     
     def XGBoost(self, gamma, learning_rate, colsample_bytree, subsample, max_depth, min_child_weight):
-        parms = {
-            'objective': 'reg:squarederror',
-            'gamma': gamma,
-            'learning_rate': learning_rate,
-            'colsample_bytree': colsample_bytree,
-            'subsample': subsample,
-            'max_depth': max_depth,
-            'min_child_weight': min_child_weight,
-            'tree_method': 'hist'
-        }
-        xgb_mod = xgb.train(
-            params = parms,
-            dtrain = self.dtrain,
-            num_boost_round=1000
+        xgb_mod = xgb.XGBRegressor(
+            objective='reg:squarederror',
+            gamma=gamma,
+            learning_rate=learning_rate,
+            colsample_bytree=colsample_bytree,
+            subsample=subsample,
+            max_depth=max_depth,
+            min_child_weight=min_child_weight,
+            n_estimators=1000,
+            tree_method='hist',
+            n_jobs=-1,
+            random_state=42
         )
-        y_pred = xgb_mod.predict(self.dtest)
+        xgb_mod.fit(self.X_train, self.y_train)
+        y_pred = xgb_mod.predict(self.X_test)
         rmse = root_mean_squared_error(self.y_test, y_pred)
         R_squared = 1 - np.sum((self.y_test - y_pred) ** 2) / np.sum((self.y_test - np.mean(self.y_test)) ** 2)
         return {'error': rmse, 'variance_explained': R_squared, 'y_pred': np.exp(y_pred), 'model': xgb_mod, 'scale_fit': self.scale_fit}
