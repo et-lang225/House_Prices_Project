@@ -15,4 +15,6 @@ Data files in `Data/` folder (ignored by git).
 ## Instructions
 If Full_Model.ipynb is run through every cell then price predictions will be made with user preferences from a generalized linear mixed model. However, the first cell has to be run the first time (as it downloads the data). The data download code is commented out right now so be sure to uncomment and run before running the rest of the code for the first time.     
 
-The resulting dataframe is sorted by homicides and predicted price (lowest to highest).
+The resulting dataframe is sorted by homicides and predicted price (lowest to highest).    
+
+Once Full_Model.ipynb is completed and all cells have been executed properly, there should be a zip_scores.js file generated and Map.html should be operable. The Map.html should only require a double-click to operate.
