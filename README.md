@@ -13,21 +13,6 @@ Data files in `Data/` folder (ignored by git).
 
 
 ## Instructions
-Download Data Directly into your Working Directory Using data_load.py:    
-  from data_load import Data # importing the contents from the data_load.py    
-  load = Data() # Assigining a variable to the Data class    
-  load.HOMES_FOR_SALE() # Houses dataset from Kaggle    
-  load.INCOME() # Income Data by zip code from IRS    
-  load.HOMICIDES() # Homicides data by county from HHS    
-  load.POPULATION() # Census data by zip code     
-  load.ZIP_COUNTY() # df that relates zip code to county    
+If Full_Model.ipynb is run through every cell then price predictions will be made with user preferences from a generalized linear mixed model. However, the first cell has to be run the first time (as it downloads the data). The data download code is commented out right now so be sure to uncomment and run before running the rest of the code for the first time.     
 
-Clean data can be accssed through Final_Data_Output.py:    
-  from Final_Data_Output import Final_Data as FD    
-  FD = FD()    
-  clean_df = FD.Merge_all()    
-  clean_df.info()    
-
-  clean_df = clean_df.dropna()     
-  clean_df = sm.add_constant(clean_df)    
-  clean_df.shape    
+The resulting dataframe is sorted by homicides and predicted price (lowest to highest).

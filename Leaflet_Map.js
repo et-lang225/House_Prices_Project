@@ -1,6 +1,4 @@
-// ================================
-// 1. Initialize Map
-// ================================
+
 const map = L.map('map').setView([37.8, -96], 4);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -12,9 +10,7 @@ let zipScores = {};
 let minRank = Infinity;
 let maxRank = -Infinity;
 
-// ================================
-// 2. Load zip_scores.json
-// ================================
+
 fetch("zip_scores.json")
   .then(res => {
     console.log("zip_scores fetch response:", res);
@@ -43,9 +39,7 @@ fetch("zip_scores.json")
   .catch(err => console.error("Failed to load zip_scores.json:", err));
 
 
-// ================================
-// 3. Load ZCTA polygons
-// ================================
+
 function loadZCTA() {
   fetch("us_zip_codes_wgs84.geojson")
     .then(res => res.json())
@@ -69,10 +63,6 @@ function getZipFromFeature(feature) {
   return String(rawZip).padStart(5, "0");
 }
 
-
-// ================================
-// 4. Style function (colors by rank)
-// ================================
 function styleZCTA(feature) {
   const zip = getZipFromFeature(feature);
   const stats = zipScores[zip];
