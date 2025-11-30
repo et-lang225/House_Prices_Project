@@ -62,7 +62,7 @@ class Hyper_Opt:
         # 
         param_grid = {
         # 'n_estimators': [25, 50, 100, 200, 400, 500, 600, 700],
-        'max_depth': [30,40, 50],
+        'max_depth': [20,30,40, 50],
         'min_samples_split': [2, 4, 6]
         }
         RF = RandomForestRegressor(n_estimators=400 , random_state=42, n_jobs=8, max_samples=0.05)
