@@ -111,14 +111,13 @@ class Final_Data:
 
         Q1 = np.quantile(df, 0.25, axis=0)
         Q3 = np.quantile(df, 0.75, axis=0)
-        IQR =  Q1 - Q3
+        IQR =  Q3 - Q1
         lower = Q1 - 3 * IQR
         upper = Q3 + 3 * IQR
 
         i = 0
         for col in analysis_columns:
-            df.loc[df[col] >= lower[i],]
-            df.loc[df[col] <= upper[i],]
+            df = df[(df[col] >= lower[i]) & (df[col] <= upper[i])]
             i += 1
         
         clean_df = df.reset_index(drop=True)
