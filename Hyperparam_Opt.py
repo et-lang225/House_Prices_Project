@@ -54,13 +54,12 @@ class Hyper_Opt:
             trials=trials
         )
         # This function should take about an hour
-        # Michael this will get faster if you have a fast GPU, I will have to adjust the code though to use that GPU
         print(f"\nOptimization finished. Best parameters found:\n{best_params}")
         print(f"Minimum RMSE: {trials.best_trial['result']['loss']:.4f}")
         {'Best Parameters': best_params, 'Min RMSE': trials.best_trial['result']['loss']}
     
     def Random_Forest_CV(self):
-        # as of right now this takes 227 minutes
+        # 
         param_grid = {
         # 'n_estimators': [25, 50, 100, 200, 400, 500, 600, 700],
         'max_depth': [30,40, 50],

@@ -22,6 +22,10 @@ class Client_Opt:
     
     def Client_prediction(self, beds=input("bedrooms you would like:"), baths=input("bathrooms you would like:"),
                     sqft=input("square footage you would like:"), acre_lot=input("acreage you would like (acre=sqft/43,560):")):
+        print(f"Chosen Bedrooms: {beds}")
+        print(f"Chosen Bathrooms: {baths}")
+        print(f"Chosen Square Footage: {sqft}")
+        print(f"Chosen Square Footage: {acre_lot}")
         self.pred_df['bed'] = float(beds)
         self.pred_df['bath'] = float(baths)
         self.pred_df['house_size'] = float(sqft)
