@@ -25,7 +25,7 @@ class Client_Opt:
         print(f"Chosen Bedrooms: {beds}")
         print(f"Chosen Bathrooms: {baths}")
         print(f"Chosen Square Footage: {sqft}")
-        print(f"Chosen Square Footage: {acre_lot}")
+        print(f"Chosen Acreage: {acre_lot}")
         self.pred_df['bed'] = float(beds)
         self.pred_df['bath'] = float(baths)
         self.pred_df['house_size'] = float(sqft)
