@@ -13,7 +13,7 @@ Data files in `Data/` folder (ignored by git).
 
 
 ## Instructions
-If Full_Model.ipynb is run through every cell then price predictions will be made with user preferences from a generalized linear mixed model. However, the first cell has to be run the first time (as it downloads the data). The data download code is commented out right now so be sure to uncomment and run before running the rest of the code for the first time.     
+If Full_Model.ipynb is run through every cell then price predictions will be made with user preferences from a XGBoost model. However, the first cell has to be run the first time (as it downloads the data). The data download code is commented out right now so be sure to uncomment and run before running the rest of the code for the first time.     
 
 The resulting dataframe is sorted by homicides and predicted price (lowest to highest).    
 
